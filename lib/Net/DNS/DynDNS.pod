@@ -27,6 +27,14 @@ dyndns.org.
 returns a new object for updating dyndns.org entries.  The username and password
 parameters are from your dyndns.org account.
 
+=item update_allowed ( $setting )
+
+returns whether the object is permitted to make another update to dyndns.org without 
+human intervention.  There are a list of return codes at 
+http://www.dyndns.org/developers/specs/return.html that require this behaviour.  To
+signal that human intervention has allowed updating to continue, pass a true value 
+in the parameter list.
+
 =item update( $hostnames, $ip_address, $params )
 
 returns the ip address that has been assigned to the hostnames.  The hostnames should be

@@ -1,7 +1,7 @@
 #! /usr/bin/perl 
 
 use Net::DNS::DynDNS();
-use Test::More(tests => 7);
+use Test::More(tests => 10);
 use strict;
 use warnings;
 
@@ -19,4 +19,9 @@ eval { $dyn->update('test.homeip.net', '10.1.1.1') };
 ok ($@ ne '', "Private IP addresses not allowed\n");
 eval { Net::DNS::DynDNS->new('test', 'wrong_password')->update('test.homeip.net'); };
 ok ($@ =~ /password/i, "Successfully detected that the wrong password has been used");
+$dyn->update_allowed(0); # Fake an error
+eval { $dyn->update('test.homeip.net') };
+ok($@ ne '', "Do not update after a failure from dyndns.org");
+ok(not($dyn->update_allowed(1)), "Signal that human intervention has allowed the object to make update requests again");
+ok($dyn->update('test.homeip.net'), "Successfuly update to dyndns.org");
 

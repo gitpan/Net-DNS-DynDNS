@@ -5,7 +5,7 @@ use HTTP::Cookies();
 use HTTP::Headers();
 use warnings;
 use strict;
-our ($VERSION) = '0.9';
+our ($VERSION) = '0.91';
 
 sub new {
 	my ($class, $user_name, $password, $params) = @_;
@@ -27,7 +27,7 @@ sub new {
 			die("The 'timeout' parameter must be a number\n");
 		}
 	}
-	my ($name) = "Net::DNS::DynDNS $VERSION\n";
+	my ($name) = "Net::DNS::DynDNS $VERSION "; # a space causes the default LWP User Agent to be appended.
 	if (exists $params->{user_agent}) {
 		if (($params->{user_agent}) && ($params->{user_agent} =~ /\S/)) {
 			$name = $params->{user_agent};
@@ -45,6 +45,7 @@ sub new {
 	}
 	$self->{_headers} = $headers;
 	bless $self, $class;
+	$self->update_allowed(1);
 	return ($self);
 }
 
@@ -61,7 +62,7 @@ sub _get {
 		alarm 0;
 	};
 	if ($@) {
-		die("Failed to get a response from '$url'\n");
+		die("Failed to get a response from '$url':$@\n");
 	}
 	return ($response);
 }
@@ -103,12 +104,23 @@ sub default_ip_address {
 	my ($user_name, $password) = $headers->authorization_basic();
 	$headers->remove_header('Authorization');
 	
-	my ($response) = $self->_get($check_ip_url);
-
+	my ($response);
+	eval {
+		$response = $self->_get($check_ip_url);
+	};
+	my ($network_error);
+	if ($@) {
+		$network_error = $@;
+	}
+		
 	# restore user_name / password
 
 	if (($user_name) && ($password)) {
 		$headers->authorization_basic($user_name, $password);
+	}
+
+	if ($network_error) {
+		die($network_error);
 	}
 
 	my ($ip_address);
@@ -120,7 +132,12 @@ sub default_ip_address {
 			die("Failed to parse response from '$check_ip_url'\n$content\n");
 		}
 	} else {
-		die("Failed to get a success type response from '$check_ip_url'\n");
+		my ($content) = $response->content();
+		if ($content =~ /Can't connect to checkip.dyndns.org/) {
+			die("Failed to connect to '$check_ip_url'\n");
+		} else {
+			die("Failed to get a success type response from '$check_ip_url'\n");
+		}
 	}
 	return ($ip_address);
 }
@@ -129,6 +146,9 @@ sub _validate_update {
 	my ($self, $hostnames, $ip_address, $params) = @_;
 	my ($headers) = $self->{_headers};
 	my ($user_name, $password) = $headers->authorization_basic();
+	unless ($self->update_allowed()) {
+		die("dyndns.org has forbidden updates until the previous error is corrected\n");	
+	}
 	unless (($user_name) && ($password)) {
 		die("Username and password must be supplied for an update\n");
 	}
@@ -252,33 +272,47 @@ sub _validate_update {
 	}
 }
 
+sub update_allowed {
+	my ($self, $allowed) = @_;
+	my ($old);
+	if ((exists $self->{update_allowed}) && ($self->{update_allowed})) {
+		$old = $self->{update_allowed};	
+	}
+	if (defined $allowed) {
+		$self->{update_allowed} = $allowed;
+	}
+	return ($old);
+}
+
 sub _error {
 	my ($self, $code, $content) = @_;
+	$self->update_allowed(0);
 	if ($code eq 'badsys') {
-		die("The 'system' parameter must be one of 'dyndns','statdns' or 'custom'\n$content\n");	
+		$self->{error} = "The 'system' parameter must be one of 'dyndns','statdns' or 'custom'";
 	} elsif ($code eq 'badagent') {
-		die("This user-agent has been blocked for not following the specification\n$content\n");	
+		$self->{error} = "This user-agent has been blocked for not following the specification";
 	} elsif ($code eq 'badauth') {
-		die("The username/password specified are incorrect\n$content\n");	
+		$self->{error} = "The username/password specified are incorrect";
 	} elsif ($code eq '!donator') {
-		die("This option is only available to credited users\n$content\n");
+		$self->{error} = "This option is only available to credited users";
 	} elsif ($code eq 'notfqdn') {
-		die("The specified hostname is not a fully qualified domain name\n$content\n");
+		$self->{error} = "The specified hostname is not a fully qualified domain name";
 	} elsif ($code eq 'nohost') {
-		die("The specified hostname does not exist\n$content\n");
+		$self->{error} = "The specified hostname does not exist";
 	} elsif ($code eq '!yours') {
-		die("The specified hostname exists, but not under the username specified\n$content\n");
+		$self->{error} = "The specified hostname exists, but not under the username specified";
 	} elsif ($code eq 'abuse') {
-		die("The specified hostname is blocked for update abuse\n$content\n");
+		$self->{error} = "The specified hostname is blocked for update abuse";
 	} elsif ($code eq 'numhost') {
-		die("Too many or too few hosts found\n$content\n");
+		$self->{error} = "Too many or too few hosts found";
 	} elsif ($code eq 'dnserr') {
-		die("Remote DNS error encountered\n$content\n");
+		$self->{error} = "Remote DNS error encountered";
 	} elsif ($code eq '911') {
-		die("Serious problem at dyndns.org. Check http://www.dyndns.org/news/status/\n$content\n");
+		$self->{error} = "Serious problem at dyndns.org. Check http://www.dyndns.org/news/status/";
 	} else {
-		die("Unknown error:$code\n$content\n");
+		$self->{error} = "Unknown error:$code";
 	}
+	die("$self->{error}\n$content\n");
 }
 
 sub update {
