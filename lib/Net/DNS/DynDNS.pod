@@ -1,0 +1,69 @@
+
+=head1 NAME
+
+Net::DNS::DynDNS - Update dyndns.org with correct ip address for your domain name
+
+=head1 SYNOPSIS
+
+  print Net::DNS::DynDNS->default_ip_address();
+  print Net::DNS::DynDNS->new('user', 'password')->update('test.dyndns.org,test.homeip.net');
+
+=head1 DESCRIPTION
+
+This module allows automated updates to your dyndns.org domain name to your
+current ip address.  This is useful for people running servers that operate 
+off dynamic ip addresses.  
+
+=head1 Functions
+
+=item default_ip_address
+
+returns your current ip address according to dyndns.org.  This function should
+not be used more than once every 10 minutes according to terms of usage for
+dyndns.org.
+
+=item new( $username, $password )
+
+returns a new object for updating dyndns.org entries.  The username and password
+parameters are from your dyndns.org account.
+
+=item update( $hostnames, $ip_address, $params )
+
+returns the ip address that has been assigned to the hostnames.  The hostnames should be
+fully qualified domain names.  If there is more than one hostname to be updated, they should
+be separated with a comma.  The ip_address argument is optional.  It specifies which ip 
+address should be assigned to the hostnames argument.  If the ip_address argument is not 
+supplied, dyndns.org will assign your current ip address to the hostnames.  The optional
+params argument is a hashref that may contain the following values
+
+   Parameter            Default   Values
+   system               dyndns    dyndns | statdns | custom
+   wildcard             none      ON | OFF | NOCHG 
+   mx                   none      any valid fully qualified hostname 
+   backmx               none      YES | NO
+   offline              none      YES | NO
+   protocol             https     http | https
+
+Further information about each of these parameters is available at
+http://www.dyndns.org/developers/specs/syntax.html
+
+=head1 AUTHOR
+
+David Dick <ddick@cpan.org>
+
+=head1 PREREQUISITES
+
+Uses B<LWP>, B<HTTP::Cookies> and B<HTTP::Headers> modules.  Also uses B<Net::HTTPS> for 
+secure communications.
+
+=head1 BUGS
+
+None known at this point
+ 
+=head1 COPYRIGHT
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
+
