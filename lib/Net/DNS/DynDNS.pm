@@ -5,7 +5,7 @@ use HTTP::Cookies();
 use HTTP::Headers();
 use warnings;
 use strict;
-our ($VERSION) = '0.91';
+our ($VERSION) = '0.92';
 
 sub new {
 	my ($class, $user_name, $password, $params) = @_;
@@ -155,7 +155,7 @@ sub _validate_update {
 	unless ($hostnames) {
 		die("The update method must be supplied with a hostname\n");
 	}
-	unless ($hostnames =~ /^(?:(?:\w+\.)+\w+,?)+$/) {
+	unless ($hostnames =~ /^(?:(?:[\w\-]+\.)+[\w\-]+,?)+$/) {
 		die("The hostnames do not seem to be in a valid format.  Try 'test.dyndns.org'\n");
 	}
 	if (defined $ip_address) {

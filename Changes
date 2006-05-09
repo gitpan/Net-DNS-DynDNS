@@ -1,7 +1,0 @@
-CHANGES
--------
-
-  0.91 - 17 January 2005
-
-      * Added the update_allowed method.  Included a semi-working example of a 
-        dyndns.org agent in the examples directory 
