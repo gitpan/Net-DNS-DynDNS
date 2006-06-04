@@ -2,4 +2,8 @@ MANIFEST
 Makefile.PL
 t/test.t
 lib/Net/DNS/DynDNS.pm
+lib/Net/DNS/DynDNS.pod
+examples/dyndnsd.pl
+examples/dyndnsd.cnf
+Changes
 META.yml                                 Module meta-data (added by MakeMaker)
