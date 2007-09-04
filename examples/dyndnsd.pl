@@ -1,4 +1,6 @@
-#! /usr/bin/perl
+#! /usr/bin/perl -wT
+
+use strict;
 
 package Net::DNS::DynDNS::Agent;
 
@@ -8,8 +10,6 @@ use Getopt::Long();
 use FileHandle();
 use File::Spec();
 use Fcntl();
-use strict;
-use warnings;
 
 my ($config_file);
 Getopt::Long::GetOptions('file=s', \$config_file);
@@ -278,6 +278,8 @@ eval {
 					$agent->log($@, 'info', $options);
 				} else {
 					$agent->log($@, 'err', $options);
+					$agent = undef;
+					$agent = new Net::DNS::DynDNS::Agent($config_file);
 				}
 				$previousError = $@;
 			} else {

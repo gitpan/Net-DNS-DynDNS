@@ -5,7 +5,7 @@ use HTTP::Cookies();
 use HTTP::Headers();
 use warnings;
 use strict;
-our ($VERSION) = '0.93';
+our ($VERSION) = '0.94';
 
 sub new {
 	my ($class, $user_name, $password, $params) = @_;
