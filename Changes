@@ -1,6 +1,10 @@
 CHANGES
 -------
 
+  0.95 - 6 September 2007
+
+      * Skip remaining tests if tests fail due to update abuse
+
   0.94 - 5 September 2007
 
       * Added dependency on Crypt::SSLeay
