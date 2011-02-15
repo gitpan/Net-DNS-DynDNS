@@ -22,10 +22,15 @@ returns your current ip address according to dyndns.org.  This function should
 not be used more than once every 10 minutes according to terms of usage for
 dyndns.org.
 
-=item new( $username, $password )
+=item new( $username, $password, $params )
 
 returns a new object for updating dyndns.org entries.  The username and password
 parameters are from your dyndns.org account.
+
+   Parameter            Default
+   server               dyndns.org
+   dns_server           members.dyndns.org
+   check_ip             checkip.dyndns.org
 
 =item update_allowed ( $setting )
 

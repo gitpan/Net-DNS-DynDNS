@@ -13,6 +13,9 @@ Hosts test.dyndns.org
 # BackMx No
 # Offline NO
 # Protocol https
+# Dns_server members.dyndns.org
+# Server dyndns.org
+# Check_ip checkip.dyndns.org
 
 User test
 Password test

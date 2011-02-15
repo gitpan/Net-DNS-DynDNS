@@ -1,6 +1,12 @@
 CHANGES
 -------
 
+  0.96 - 15 February 2011
+
+      * Allow customisation of the domain names used in Net::DNS::DynDNS.  The domain
+        names are manipulated via the Net::DNS::DynDNS->new() call.
+        Thanks to Mark <mohy@pair.com> for the patch.
+
   0.95 - 6 September 2007
 
       * Skip remaining tests if tests fail due to update abuse

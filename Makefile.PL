@@ -12,4 +12,9 @@ WriteMakefile(
 				'Net::HTTPS' => 0,
 				'Crypt::SSLeay' => 0,
                                         },
+    ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
+      (ABSTRACT_FROM  => 'lib/Net/DNS/DynDNS.pod', # retrieve abstract from module
+       AUTHOR         => 'David Dick <ddick@cpan.org>') : ()),
+    ($ExtUtils::MakeMaker::VERSION ge '6.30_00' ? # shamelessly copied this from Template Toolkit
+      (LICENSE           => 'perl') : ()),
 );

@@ -118,6 +118,7 @@ sub check {
 	$self->{next_allowed_check} += (20 * 60); # run every 20 minutes
 	my ($old_ip_address);
 	my ($databaseHandle);
+	my ($server_options);
 	my ($databasePath) = $options->{database};
 	my ($username) = $options->{user};
 	my ($password) = $options->{password};
@@ -145,8 +146,17 @@ sub check {
 	if (exists $options->{protocol}) {
 		$params->{protocol} = $options->{protocol};
 	}
+	if (exists $options->{server}) {
+		$server_options->{server} = $options->{server};
+	}
+	if (exists $options->{dns_server}) {
+		$server_options->{dns_server} = $options->{dns_server};
+	}
+	if (exists $options->{check_ip}) {
+		$server_options->{check_ip} = $options->{check_ip};
+	}
 	unless ((exists $self->{dyndns}) && ($self->{dyndns})) {
-		$self->{dyndns} = Net::DNS::DynDNS->new($username, $password);
+		$self->{dyndns} = Net::DNS::DynDNS->new($username, $password, $server_options);
 	}
 	my ($dyndns) = $self->{dyndns};
 	my ($current_ip_address) = $dyndns->default_ip_address();

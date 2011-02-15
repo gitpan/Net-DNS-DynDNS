@@ -5,7 +5,7 @@ use HTTP::Cookies();
 use HTTP::Headers();
 use warnings;
 use strict;
-our ($VERSION) = '0.95';
+our ($VERSION) = '0.96';
 
 sub new {
 	my ($class, $user_name, $password, $params) = @_;
@@ -44,6 +44,9 @@ sub new {
 		$headers->authorization_basic($user_name, $password);
 	}
 	$self->{_headers} = $headers;
+	$self->{server} = $params->{server} || 'dyndns.org';
+	$self->{dns_server} = $params->{dns_server} || 'members.dyndns.org';
+	$self->{check_ip} = $params->{check_ip} || 'checkip.dyndns.org';
 	bless $self, $class;
 	$self->update_allowed(1);
 	return ($self);
@@ -95,7 +98,7 @@ sub default_ip_address {
 			die("Cannot load Net::HTTPS\n");
 		}
 	}
-	my ($check_ip_url) = $protocol . '://checkip.dyndns.org';
+	my ($check_ip_url) = $protocol . '://' . $self->{check_ip};
 
 	# user_name / password is not necessary for checkip.
 	# therefore don't send user_name / password
@@ -133,7 +136,7 @@ sub default_ip_address {
 		}
 	} else {
 		my ($content) = $response->content();
-		if ($content =~ /Can't connect to checkip.dyndns.org/) {
+		if ($content =~ /Can't connect to $self->{check_ip}/) {
 			die("Failed to connect to '$check_ip_url'\n");
 		} else {
 			die("Failed to get a success type response from '$check_ip_url'\n");
@@ -147,7 +150,7 @@ sub _validate_update {
 	my ($headers) = $self->{_headers};
 	my ($user_name, $password) = $headers->authorization_basic();
 	unless ($self->update_allowed()) {
-		die("dyndns.org has forbidden updates until the previous error is corrected\n");	
+		die("$self->{server} has forbidden updates until the previous error is corrected\n");	
 	}
 	unless (($user_name) && ($password)) {
 		die("Username and password must be supplied for an update\n");
@@ -156,7 +159,7 @@ sub _validate_update {
 		die("The update method must be supplied with a hostname\n");
 	}
 	unless ($hostnames =~ /^(?:(?:[\w\-]+\.)+[\w\-]+,?)+$/) {
-		die("The hostnames do not seem to be in a valid format.  Try 'test.dyndns.org'\n");
+		die("The hostnames do not seem to be in a valid format.  Try 'test.$self->{server}'\n");
 	}
 	if (defined $ip_address) {
 		my (@bytes) = split(/\./, $ip_address);
@@ -180,7 +183,7 @@ sub _validate_update {
 				(($bytes[0] == 192) && ($bytes[1] == 168)) || # private
 				($bytes[0] >= 224)) # multicast && reserved
 		{
-			die("Bad IP address.  The IP address is in a range that is not suitable for the dyndns.org system\n");
+			die("Bad IP address.  The IP address is in a range that is not suitable for the $self->{server} system\n");
 		}
 	}
 	if ((ref $params) && ((ref $params) eq 'HASH')) {
@@ -219,7 +222,7 @@ sub _validate_update {
 					die("Not allowed to set 'mx' parameter unless the 'system' parameter is 'dyndns' or 'statdns'\n");
 				}
 				unless ($params->{mx} =~ /^(?:(?:\w+\.)+\w+,?)+$/) {
-					die("The 'mx' parameter does not seem to be in a valid format.  Try 'test.dyndns.org'\n");
+					die("The 'mx' parameter does not seem to be in a valid format.  Try 'test.$self->{server}'\n");
 				}
 			} else {
 				die("The 'mx' parameter must be a valid fully qualified domain name\n");
@@ -308,7 +311,7 @@ sub _error {
 	} elsif ($code eq 'dnserr') {
 		$self->{error} = "Remote DNS error encountered";
 	} elsif ($code eq '911') {
-		$self->{error} = "Serious problem at dyndns.org. Check http://www.dyndns.org/news/status/";
+		$self->{error} = "Serious problem at $self->{server}. Check http://www.$self->{server}/news/status/";
 	} else {
 		$self->{error} = "Unknown error:$code";
 	}
@@ -332,7 +335,7 @@ sub update {
 			die("Cannot load Net::HTTPS\n");
 		}
 	}
-	my ($update_url) = $protocol . '://members.dyndns.org/nic/update?';
+	my ($update_url) = $protocol . "://$self->{dns_server}/nic/update?";
 	if (exists $params->{system}) {
 		$update_url .= 'system=' . $params->{system} . '&hostname=' . $hostnames;
 	} else {
