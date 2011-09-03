@@ -50,7 +50,6 @@ supplied, dyndns.org will assign your current ip address to the hostnames.  The 
 params argument is a hashref that may contain the following values
 
    Parameter            Default   Values
-   system               dyndns    dyndns | statdns | custom
    wildcard             none      ON | OFF | NOCHG 
    mx                   none      any valid fully qualified hostname 
    backmx               none      YES | NO

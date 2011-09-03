@@ -1,6 +1,14 @@
 CHANGES
 -------
 
+  0.97 - 3 September 2011
+
+      * Retired the system parameter
+      * Corrected error messages to http://dyn.com/support/developers/api/return-codes/ as reported in RT 70684 by mohy@smx.pair.com
+      * Fixed code to pass perlcritic -1
+      * Improved the test suite to hopefully catch more server side error messages and skip those tests
+      * Made the minimum version 5.10 allow 'given ... when' structure required by perlcritic
+
   0.96 - 15 February 2011
 
       * Allow customisation of the domain names used in Net::DNS::DynDNS.  The domain

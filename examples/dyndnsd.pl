@@ -128,9 +128,6 @@ sub check {
 		$ip_address = $options->{ipaddress};
 	}
 	my ($params) = {};
-	if (exists $options->{system}) {
-		$params->{system} = $options->{system};
-	}
 	if (exists $options->{wildcard}) {
 		$params->{wildcard} = $options->{wildcard};
 	}
