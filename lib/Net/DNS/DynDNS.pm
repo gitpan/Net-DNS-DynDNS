@@ -11,7 +11,7 @@ use English qw(-no_match_vars);
 use warnings;
 use strict;
 use feature ':5.10';
-our $VERSION = '0.97';
+our $VERSION = '0.98';
 
 my $DEFAULT_TIMEOUT                      = '60';
 my $NUMBER_OF_OCTETS_IN_IP_ADDRESS       = '4';
@@ -232,7 +232,7 @@ sub _validate_ip_address {
             if ( not( $byte =~ /^\d+$/xsm ) ) {
                 die "Bad IP address.  Each byte must be numeric\n";
             }
-            if ( ( $byte >= $MAXIMUM_VALUE_OF_AN_OCTET ) || ( $byte <= 0 ) ) {
+            if ( ( $byte >= $MAXIMUM_VALUE_OF_AN_OCTET ) || ( $byte < 0 ) ) {
                 die "Bad IP address.  Each byte must be within 0-255\n";
             }
         }

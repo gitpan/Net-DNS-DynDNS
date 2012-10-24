@@ -1,6 +1,10 @@
 CHANGES
 -------
 
+  0.98 - 24 October 2012
+
+      * Fixed the definition of ip address to allow '0' as reported in RT 80338 by Jim Ziobro
+
   0.97 - 3 September 2011
 
       * Retired the system parameter
