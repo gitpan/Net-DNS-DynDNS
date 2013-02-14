@@ -11,7 +11,7 @@ use English qw(-no_match_vars);
 use warnings;
 use strict;
 use feature ':5.10';
-our $VERSION = '0.98';
+our $VERSION = '0.99';
 
 my $DEFAULT_TIMEOUT                      = '60';
 my $NUMBER_OF_OCTETS_IN_IP_ADDRESS       = '4';

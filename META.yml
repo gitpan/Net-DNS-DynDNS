@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Net-DNS-DynDNS
-version:            0.98
+version:            0.99
 abstract:           Update dyndns.org with correct ip address for your domain name
 author:
     - David Dick <ddick@cpan.org>

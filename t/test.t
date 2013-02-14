@@ -50,6 +50,8 @@ SKIP: {
 		skip("DNS error during private address update test", 5);
 	} elsif ($@ eq "There is a problem or scheduled maintenance on our side") {
 		skip("Server error for private address update test", 5);
+	} elsif ($@ eq "dyndns.org has forbidden updates until the previous error is corrected") {
+		skip("Server error for private address update test", 5);
 	}
 	ok($private_ip_address_detected, "Private IP addresses not allowed:$@");
 	my $incorrect_password_used;
@@ -64,6 +66,8 @@ SKIP: {
 	} elsif ($@ eq "DNS error encountered") {
 		skip("DNS error for incorrect password test", 4);
 	} elsif ($@ eq "There is a problem or scheduled maintenance on our side") {
+		skip("Server error for incorrect password test", 4);
+	} elsif ($@ eq "dyndns.org has forbidden updates until the previous error is corrected") {
 		skip("Server error for incorrect password test", 4);
 	}
 	ok ($incorrect_password_used, "Successfully detected that the wrong password has been used:$@");
@@ -85,6 +89,8 @@ SKIP: {
 	} elsif ($@ eq "DNS error encountered") {
 		skip("DNS error for update of test.homeip.net", 1);
 	} elsif ($@ eq "There is a problem or scheduled maintenance on our side") {
+		skip("Server error for update of test.homeip.net", 1);
+	} elsif ($@ eq "dyndns.org has forbidden updates until the previous error is corrected") {
 		skip("Server error for update of test.homeip.net", 1);
 	}
 	ok($successful_update, "Successful update to dyndns.org");

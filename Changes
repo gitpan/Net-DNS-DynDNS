@@ -1,6 +1,10 @@
 CHANGES
 -------
 
+  0.99 - 14 February 2013
+
+      * Added more server side error messages
+
   0.98 - 24 October 2012
 
       * Fixed the definition of ip address to allow '0' as reported in RT 80338 by Jim Ziobro
