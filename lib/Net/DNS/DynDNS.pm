@@ -10,27 +10,27 @@ use Carp();
 use English qw(-no_match_vars);
 use warnings;
 use strict;
-use feature ':5.10';
-our $VERSION = '0.99';
+our $VERSION = '0.995';
 
-my $DEFAULT_TIMEOUT                      = '60';
-my $NUMBER_OF_OCTETS_IN_IP_ADDRESS       = '4';
-my $MAXIMUM_VALUE_OF_AN_OCTET            = '256';
-my $FIRST_BYTE_OF_10_PRIVATE_RANGE       = '10';
-my $FIRST_BYTE_OF_172_16_PRIVATE_RANGE   = '172';
-my $SECOND_BYTE_OF_172_16_PRIVATE_RANGE  = '16';
-my $FIRST_BYTE_OF_192_168_PRIVATE_RANGE  = '192';
-my $SECOND_BYTE_OF_192_168_PRIVATE_RANGE = '168';
-my $LOCALHOST_RANGE                      = '127';
-my $MULTICAST_RESERVED_LOWEST_RANGE      = '224';
+our @CARP_NOT = ('Net::DNS::DynDNS');
+sub DEFAULT_TIMEOUT                      { return 60 }
+sub NUMBER_OF_OCTETS_IN_IP_ADDRESS       { return 4; }
+sub MAXIMUM_VALUE_OF_AN_OCTET            { return 256; }
+sub FIRST_BYTE_OF_10_PRIVATE_RANGE       { return 10; }
+sub FIRST_BYTE_OF_172_16_PRIVATE_RANGE   { return 172; }
+sub SECOND_BYTE_OF_172_16_PRIVATE_RANGE  { return 16; }
+sub FIRST_BYTE_OF_192_168_PRIVATE_RANGE  { return 192; }
+sub SECOND_BYTE_OF_192_168_PRIVATE_RANGE { return 168; }
+sub LOCALHOST_RANGE                      { return 127; }
+sub MULTICAST_RESERVED_LOWEST_RANGE      { return 224; }
 
 sub new {
     my ( $class, $user_name, $password, $params ) = @_;
-    my ($self)    = {};
-    my ($timeout) = $DEFAULT_TIMEOUT;
+    my $self    = {};
+    my $timeout = DEFAULT_TIMEOUT();
     if ( ( ref $user_name ) && ( ref $user_name eq 'SCALAR' ) ) {
         if ( not( ( ref $password ) && ( ref $password eq 'SCALAR' ) ) ) {
-            die "No password supplied\n";
+            Carp::croak('No password supplied');
         }
     }
     elsif ( ( ref $user_name ) && ( ( ref $user_name ) eq 'HASH' ) ) {
@@ -43,10 +43,10 @@ sub new {
             $timeout = $params->{timeout};
         }
         else {
-            die "The 'timeout' parameter must be a number\n";
+            Carp::croak(q[The 'timeout' parameter must be a number]);
         }
     }
-    my ($name) = "Net::DNS::DynDNS $VERSION "
+    my $name = "Net::DNS::DynDNS $VERSION "
       ;    # a space causes the default LWP User Agent to be appended.
     if ( exists $params->{user_agent} ) {
         if ( ( $params->{user_agent} ) && ( $params->{user_agent} =~ /\S/xsm ) )
@@ -54,14 +54,14 @@ sub new {
             $name = $params->{user_agent};
         }
     }
-    my ($ua) = LWP::UserAgent->new( timeout => $timeout )
+    my $ua = LWP::UserAgent->new( timeout => $timeout )
       ; # no sense in using keep_alive => 1 because updates and checks are supposed to happen infrequently
     $ua->agent($name);
-    my ($cookie_jar) = HTTP::Cookies->new( hide_cookie2 => 1 );
+    my $cookie_jar = HTTP::Cookies->new( hide_cookie2 => 1 );
     $ua->cookie_jar($cookie_jar);
     $ua->requests_redirectable( ['GET'] );
     $self->{_ua} = $ua;
-    my ($headers) = HTTP::Headers->new();
+    my $headers = HTTP::Headers->new();
 
     if ( ($user_name) && ($password) ) {
         $headers->authorization_basic( $user_name, $password );
@@ -72,25 +72,27 @@ sub new {
     $self->{check_ip}   = $params->{check_ip} || 'checkip.dyndns.org';
     bless $self, $class;
     $self->update_allowed(1);
-    return ($self);
+    return $self;
 }
 
 sub _get {
     my ( $self, $uri ) = @_;
-    my ($ua)      = $self->{_ua};
-    my ($headers) = $self->{_headers};
-    my ($request) = HTTP::Request->new( 'GET' => $uri, $headers );
-    my ($response);
+    my $ua      = $self->{_ua};
+    my $headers = $self->{_headers};
+    my $request = HTTP::Request->new( 'GET' => $uri, $headers );
+    my $response;
     eval {
-        local $SIG{'ALRM'} = sub { die "Timeout\n"; };
+        local $SIG{'ALRM'} =
+          sub { Carp::croak "Timeout when retrieving $uri"; };
         alarm $ua->timeout();
         $response = $ua->request($request);
         alarm 0;
         1;
     } or do {
-        die "Failed to get a response from '$uri':$EVAL_ERROR\n";
+        chomp $EVAL_ERROR;
+        Carp::croak "Failed to get a response from '$uri':$EVAL_ERROR";
     };
-    return ($response);
+    return $response;
 }
 
 sub default_ip_address {
@@ -107,12 +109,11 @@ sub default_ip_address {
     # user_name / password is not necessary for checkip.
     # therefore don't send user_name / password
 
-    my ($headers) = $self->{_headers};
+    my $headers = $self->{_headers};
     my ( $user_name, $password ) = $headers->authorization_basic();
     $headers->remove_header('Authorization');
 
-    my ($response);
-    my ($network_error);
+    my ( $response, $network_error );
     eval { $response = $self->_get($check_ip_uri); } or do {
         $network_error = $EVAL_ERROR;
     };
@@ -124,6 +125,7 @@ sub default_ip_address {
     }
 
     if ($network_error) {
+        chomp $network_error;
         Carp::croak($network_error);
     }
     return $self->_parse_ip_address( $check_ip_uri, $response );
@@ -131,7 +133,7 @@ sub default_ip_address {
 
 sub _check_ip_address_uri {
     my ( $self, $params ) = @_;
-    my ($protocol) = 'http'
+    my $protocol = 'http'
       ; # default protocol is http because no user_name / passwords are required
     if ( exists $params->{protocol} ) {
         if ( ( defined $params->{protocol} ) && ( $params->{protocol} ) ) {
@@ -139,18 +141,20 @@ sub _check_ip_address_uri {
             if (   ( $params->{protocol} ne 'http' )
                 && ( $params->{protocol} ne 'https' ) )
             {
-                die
-                  "The 'protocol' parameter must be one of 'http' or 'https'\n";
+                Carp::croak(
+                    q[The 'protocol' parameter must be one of 'http' or 'https']
+                );
             }
         }
         else {
-            die "The 'protocol' parameter must be one of 'http' or 'https'\n";
+            Carp::croak(
+                q[The 'protocol' parameter must be one of 'http' or 'https']);
         }
         $protocol = $params->{protocol};
     }
     if ( $protocol eq 'https' ) {
         eval { require Net::HTTPS; } or do {
-            die "Cannot load Net::HTTPS\n";
+            Carp::croak(q[Cannot load Net::HTTPS]);
         };
     }
     return $protocol . '://' . $self->{check_ip};
@@ -158,49 +162,52 @@ sub _check_ip_address_uri {
 
 sub _parse_ip_address {
     my ( $self, $check_ip_uri, $response ) = @_;
-    my ($ip_address);
+    my $ip_address;
     if ( $response->is_success() ) {
-        my ($content) = $response->content();
+        my $content = $response->content();
         if ( $content =~ /Current\sIP\sAddress:\s(\d+.\d+.\d+.\d+)/xsm ) {
             $ip_address = $1;
         }
         else {
-            die "Failed to parse response from '$check_ip_uri'\n$content\n";
+            Carp::croak("Failed to parse response from '$check_ip_uri'");
         }
     }
     else {
-        my ($content) = $response->content();
+        my $content = $response->content();
         if ( $content =~ /Can't\sconnect\sto\s$self->{check_ip}/xsm ) {
-            die "Failed to connect to '$check_ip_uri'\n";
+            Carp::croak("Failed to connect to '$check_ip_uri'");
         }
         else {
-            die "Failed to get a success type response from '$check_ip_uri'\n";
+            Carp::croak(
+                "Failed to get a success type response from '$check_ip_uri'");
         }
     }
-    return ($ip_address);
+    return $ip_address;
 }
 
 sub _validate_update {
     my ( $self, $hostnames, $ip_address, $params ) = @_;
-    my ($headers) = $self->{_headers};
+    my $headers = $self->{_headers};
     my ( $user_name, $password ) = $headers->authorization_basic();
     if ( not $self->update_allowed() ) {
-        die
-"$self->{server} has forbidden updates until the previous error is corrected\n";
+        Carp::croak(
+"$self->{server} has forbidden updates until the previous error is corrected"
+        );
     }
     if ( not( ($user_name) && ($password) ) ) {
-        die "Username and password must be supplied for an update\n";
+        Carp::croak(q[Username and password must be supplied for an update]);
     }
     if ( not($hostnames) ) {
-        die "The update method must be supplied with a hostname\n";
+        Carp::croak(q[The update method must be supplied with a hostname]);
     }
     if (
         not( $hostnames =~
             /^(?:(?:[\p{IsAlphabetic}\-]+[.])+[\p{IsAlphabetic}\-]+,?)+$/xsm )
       )
     {
-        die
-"The hostnames do not seem to be in a valid format.  Try 'test.$self->{server}'\n";
+        Carp::croak(
+"The hostnames do not seem to be in a valid format.  Try 'test.$self->{server}'"
+        );
     }
     $self->_validate_ip_address($ip_address);
     if ( ( ref $params ) && ( ( ref $params ) eq 'HASH' ) ) {
@@ -216,7 +223,8 @@ sub _validate_update {
         }
     }
     elsif ($params) {
-        die "Extra parameters must be passed in as a reference to a hash\n";
+        Carp::croak(
+            q[Extra parameters must be passed in as a reference to a hash]);
     }
     return;
 }
@@ -224,35 +232,36 @@ sub _validate_update {
 sub _validate_ip_address {
     my ( $self, $ip_address ) = @_;
     if ( defined $ip_address ) {
-        my (@bytes) = split /[.]/xsm, $ip_address;
-        if ( ( scalar @bytes ) != $NUMBER_OF_OCTETS_IN_IP_ADDRESS ) {
-            die "Bad IP address\n";
+        my @bytes = split /[.]/xsm, $ip_address;
+        if ( ( scalar @bytes ) != NUMBER_OF_OCTETS_IN_IP_ADDRESS() ) {
+            Carp::croak(q[Bad IP address]);
         }
         foreach my $byte (@bytes) {
             if ( not( $byte =~ /^\d+$/xsm ) ) {
-                die "Bad IP address.  Each byte must be numeric\n";
+                Carp::croak(q[Bad IP address.  Each byte must be numeric]);
             }
-            if ( ( $byte >= $MAXIMUM_VALUE_OF_AN_OCTET ) || ( $byte < 0 ) ) {
-                die "Bad IP address.  Each byte must be within 0-255\n";
+            if ( ( $byte >= MAXIMUM_VALUE_OF_AN_OCTET() ) || ( $byte < 0 ) ) {
+                Carp::croak(q[Bad IP address.  Each byte must be within 0-255]);
             }
         }
         if (
                ( $bytes[0] == 0 )
-            || ( $bytes[0] == $LOCALHOST_RANGE )
-            || ( $bytes[0] == $FIRST_BYTE_OF_10_PRIVATE_RANGE )
-            || (   ( $bytes[0] == $FIRST_BYTE_OF_172_16_PRIVATE_RANGE )
-                && ( $bytes[1] == $SECOND_BYTE_OF_172_16_PRIVATE_RANGE ) )
+            || ( $bytes[0] == LOCALHOST_RANGE() )
+            || ( $bytes[0] == FIRST_BYTE_OF_10_PRIVATE_RANGE() )
+            || (   ( $bytes[0] == FIRST_BYTE_OF_172_16_PRIVATE_RANGE() )
+                && ( $bytes[1] == SECOND_BYTE_OF_172_16_PRIVATE_RANGE() ) )
             ||    # private
             (
-                   ( $bytes[0] == $FIRST_BYTE_OF_192_168_PRIVATE_RANGE )
-                && ( $bytes[1] == $SECOND_BYTE_OF_192_168_PRIVATE_RANGE )
+                   ( $bytes[0] == FIRST_BYTE_OF_192_168_PRIVATE_RANGE() )
+                && ( $bytes[1] == SECOND_BYTE_OF_192_168_PRIVATE_RANGE() )
             )
             ||    # private
-            ( $bytes[0] >= $MULTICAST_RESERVED_LOWEST_RANGE )
+            ( $bytes[0] >= MULTICAST_RESERVED_LOWEST_RANGE() )
           )       # multicast && reserved
         {
-            die
-"Bad IP address.  The IP address is in a range that is not publically addressable\n";
+            Carp::croak(
+q[Bad IP address.  The IP address is in a range that is not publically addressable]
+            );
         }
     }
 }
@@ -266,13 +275,15 @@ sub _check_wildcard {
                 && ( $params->{wildcard} ne 'OFF' )
                 && ( $params->{wildcard} ne 'NOCHG' ) )
             {
-                die
-"The 'wildcard' parameter must be one of 'ON','OFF' or 'NOCHG'\n";
+                Carp::croak(
+q[The 'wildcard' parameter must be one of 'ON','OFF' or 'NOCHG']
+                );
             }
         }
         else {
-            die
-              "The 'wildcard' parameter must be one of 'ON','OFF' or 'NOCHG'\n";
+            Carp::croak(
+                q[The 'wildcard' parameter must be one of 'ON','OFF' or 'NOCHG']
+            );
         }
     }
 }
@@ -287,19 +298,22 @@ sub _check_mx {
                 )
               )
             {
-                die
-"The 'mx' parameter does not seem to be in a valid format.  Try 'test.$self->{server}'\n";
+                Carp::croak(
+"The 'mx' parameter does not seem to be in a valid format.  Try 'test.$self->{server}'"
+                );
             }
         }
         else {
-            die
-"The 'mx' parameter must be a valid fully qualified domain name\n";
+            Carp::croak(
+q[The 'mx' parameter must be a valid fully qualified domain name]
+            );
         }
     }
     else {
         if ( exists $params->{backmx} ) {
-            die
-"The 'backmx' parameter cannot be set without specifying the 'mx' parameter\n";
+            Carp::croak(
+q[The 'backmx' parameter cannot be set without specifying the 'mx' parameter]
+            );
         }
     }
 }
@@ -312,11 +326,12 @@ sub _check_backmx {
             if (   ( $params->{backmx} ne 'YES' )
                 && ( $params->{backmx} ne 'NO' ) )
             {
-                die "The 'backmx' parameter must be one of 'YES' or 'NO'\n";
+                Carp::croak(
+                    q[The 'backmx' parameter must be one of 'YES' or 'NO']);
             }
         }
         else {
-            die "The 'backmx' parameter must be one of 'YES' or 'NO'\n";
+            Carp::croak(q[The 'backmx' parameter must be one of 'YES' or 'NO']);
         }
     }
 }
@@ -329,11 +344,13 @@ sub _check_offline {
             if (   ( $params->{offline} ne 'YES' )
                 && ( $params->{offline} ne 'NO' ) )
             {
-                die "The 'offline' parameter must be one of 'YES' or 'NO'\n";
+                Carp::croak(
+                    q[The 'offline' parameter must be one of 'YES' or 'NO']);
             }
         }
         else {
-            die "The 'offline' parameter must be one of 'YES' or 'NO'\n";
+            Carp::croak(
+                q[The 'offline' parameter must be one of 'YES' or 'NO']);
         }
     }
 }
@@ -345,70 +362,47 @@ sub _check_protocol {
         if (   ( $params->{protocol} ne 'http' )
             && ( $params->{protocol} ne 'https' ) )
         {
-            die "The 'protocol' parameter must be one of 'http' or 'https'\n";
+            Carp::croak(
+                q[The 'protocol' parameter must be one of 'http' or 'https']);
         }
     }
     else {
-        die "The 'protocol' parameter must be one of 'http' or 'https'\n";
+        Carp::croak(
+            q[The 'protocol' parameter must be one of 'http' or 'https']);
     }
 }
 
 sub update_allowed {
     my ( $self, $allowed ) = @_;
-    my ($old);
+    my $old;
     if ( ( exists $self->{update_allowed} ) && ( $self->{update_allowed} ) ) {
         $old = $self->{update_allowed};
     }
     if ( defined $allowed ) {
         $self->{update_allowed} = $allowed;
     }
-    return ($old);
+    return $old;
 }
 
 sub _error {
     my ( $self, $code, $content ) = @_;
     $self->update_allowed(0);
-    given ($code) {
-        when ('badauth') {
-            $self->{error} =
-              'The username and password pair do not match a real user';
-        }
-        when ('!donator') {
-            $self->{error} =
-'An option available only to credited users (such as offline URL) was specified, but the user is not a credited user';
-        }
-        when ('notfqdn') {
-            $self->{error} =
-'The hostname specified is not a fully-qualified domain name (not in the form hostname.dyndns.org or domain.com)';
-        }
-        when ('nohost') {
-            $self->{error} =
-              'The hostname specified does not exist in this user account';
-        }
-        when ('numhost') {
-            $self->{error} =
-              'Too many hosts (more than 20) specified in an update';
-        }
-        when ('abuse') {
-            $self->{error} =
-              'The hostname specified is blocked for update abuse';
-        }
-        when ('badagent') {
-            $self->{error} =
-              'The user agent was not sent or HTTP method is not permitted';
-        }
-        when ('dnserr') {
-            $self->{error} = 'DNS error encountered';
-        }
-        when ('911') {
-            $self->{error} =
-              'There is a problem or scheduled maintenance on our side';
-        }
-        default {
-            $self->{error} = "Unknown error:$code";
-        }
-    }
-    die "$self->{error}\n";
+    my %errors = (
+        'badauth' => 'The username and password pair do not match a real user',
+        '!donator' =>
+'An option available only to credited users (such as offline URL) was specified, but the user is not a credited user',
+        'notfqdn' =>
+'The hostname specified is not a fully-qualified domain name (not in the form hostname.dyndns.org or domain.com)',
+        'nohost' =>
+          'The hostname specified does not exist in this user account',
+        'numhost' => 'Too many hosts (more than 20) specified in an update',
+        'abuse'   => 'The hostname specified is blocked for update abuse',
+        'badagent' =>
+          'The user agent was not sent or HTTP method is not permitted',
+        'dnserr' => 'DNS error encountered',
+        '911'    => 'There is a problem or scheduled maintenance on our side',
+    );
+    Carp::croak( $errors{$code} || "Unknown error:$code" );
 }
 
 sub update {
@@ -418,14 +412,14 @@ sub update {
         $ip_address = undef;
     }
     $self->_validate_update( $hostnames, $ip_address, $params );
-    my ($protocol) =
+    my $protocol =
       'https';    # default protocol is https to protect user_name / password
     if ( $params->{protocol} ) {
         $protocol = $params->{protocol};
     }
     if ( $protocol eq 'https' ) {
         eval { require Net::HTTPS; } or do {
-            die "Cannot load Net::HTTPS\n";
+            Carp::croak(q[Cannot load Net::HTTPS]);
         };
     }
     my $update_uri =
@@ -468,8 +462,9 @@ sub _parse_content {
             if ( ( $code eq 'good' ) || ( $code eq 'nochg' ) ) {
                 if ($result) {
                     if ( $result ne $additional ) {
-                        die
-"Could not understand multi-line response\n$content\n";
+                        Carp::croak(
+                            "Could not understand multi-line response\n$content"
+                        );
                     }
                 }
                 else {
@@ -486,11 +481,12 @@ sub _parse_content {
               }xsm
           )
         {
-            my ($code) = $1;
+            my ($code) = ($1);
             $self->_error( $code, $content );
         }
         else {
-            die "Failed to parse response from '$update_uri'\n$content\n";
+            Carp::croak(
+                "Failed to parse response from '$update_uri'\n$content");
         }
     }
     return $result;

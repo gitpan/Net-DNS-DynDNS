@@ -1,6 +1,12 @@
 CHANGES
 -------
 
+  0.995 - 17 February 2013
+
+      * Removed 'use feature' to improve cpan testing results
+      * Changed to Carp from die
+      * Changed formatting
+
   0.99 - 14 February 2013
 
       * Added more server side error messages
