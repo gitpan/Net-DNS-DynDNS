@@ -10,7 +10,7 @@ use Carp();
 use English qw(-no_match_vars);
 use warnings;
 use strict;
-our $VERSION = '0.995';
+our $VERSION = '0.996';
 
 our @CARP_NOT = ('Net::DNS::DynDNS');
 sub DEFAULT_TIMEOUT                      { return 60 }

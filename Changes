@@ -1,6 +1,10 @@
 CHANGES
 -------
 
+  0.996 - 14 May 2014
+
+      * Added checks for internet connectivity to test suite to address RT 95607
+
   0.995 - 17 February 2013
 
       * Removed 'use feature' to improve cpan testing results

@@ -7,11 +7,29 @@ use warnings;
 
 eval { require Net::HTTPS; };
 ok($@ eq '', "Loaded Net::HTTPS for secure updates");
-my ($default_ip) = Net::DNS::DynDNS->default_ip_address();
-ok($default_ip, "Discovered current internet address");
-my ($dyn) = new Net::DNS::DynDNS('test', 'test');
-ok($dyn, "Created a new Net::DNS::DynDNS object");
 SKIP: {
+	my $ua = LWP::UserAgent->new( timeout => 10 );
+	my $internet_available;
+        DOMAIN_NAME: foreach my $domain_name ('google.com', 'yahoo.com', 'duckduckgo.com', 'checkip.dyndns.org', 'search.cpan.org') {
+		my $request = HTTP::Request->new('HEAD', 'http://' . $domain_name);
+		my $response;
+		eval {
+			$response = $ua->request($request);
+		};
+		if ($response) {
+			if (($response->is_success()) || ($response->is_redirect())) {
+				$internet_available = 1;
+				last DOMAIN_NAME;
+			}
+		}
+	}
+	if (!$internet_available) {
+		skip("No internet connectivity detected", 9);
+	}
+	my ($default_ip) = Net::DNS::DynDNS->default_ip_address();
+	ok($default_ip, "Discovered current internet address");
+	my ($dyn) = new Net::DNS::DynDNS('test', 'test');
+	ok($dyn, "Created a new Net::DNS::DynDNS object");
 	my ($assigned_ip);
 	eval {
 		$assigned_ip = Net::DNS::DynDNS->new('test', 'test')->update('test.dyndns.org,test.homeip.net');
@@ -94,4 +112,4 @@ SKIP: {
 		skip("Server error for update of test.homeip.net", 1);
 	}
 	ok($successful_update, "Successful update to dyndns.org");
-};
+}
