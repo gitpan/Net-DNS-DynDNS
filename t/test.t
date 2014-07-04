@@ -41,6 +41,8 @@ SKIP: {
 		skip("DNS error during initial test", 7);
 	} elsif ($@ =~ /^There is a problem or scheduled maintenance on our side/) {
 		skip("Server error during initial test", 7);
+	} elsif ($@ =~ /^Unknown error/) {
+		skip("Unknown error", 7);
 	}
 	ok($assigned_ip, "Assigned new IP address to 'test.dyndns.org' and 'test.homeip.net':$@");
 	eval {

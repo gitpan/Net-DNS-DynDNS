@@ -1,6 +1,10 @@
 CHANGES
 -------
 
+  0.997 - 5 July 2014
+
+      * Added more checks to allow for bad network responses
+
   0.996 - 14 May 2014
 
       * Added checks for internet connectivity to test suite to address RT 95607
