@@ -27,4 +27,6 @@ requires:
   Net::HTTPS: 0
   Test::More: 0
   perl: 5.010000
-version: 0.997
+  strict: 0
+  warnings: 0
+version: 0.998

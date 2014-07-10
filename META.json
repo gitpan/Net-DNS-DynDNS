@@ -40,10 +40,12 @@
             "LWP" : "0",
             "Net::HTTPS" : "0",
             "Test::More" : "0",
-            "perl" : "5.010000"
+            "perl" : "5.010000",
+            "strict" : "0",
+            "warnings" : "0"
          }
       }
    },
    "release_status" : "stable",
-   "version" : "0.997"
+   "version" : "0.998"
 }

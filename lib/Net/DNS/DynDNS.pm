@@ -1,6 +1,3 @@
-## no critic (RequireRcsKeywords)
-# here's 20 cents kid, go buy yourself a real revision control system
-
 package Net::DNS::DynDNS;
 
 use LWP();
@@ -10,7 +7,7 @@ use Carp();
 use English qw(-no_match_vars);
 use warnings;
 use strict;
-our $VERSION = '0.997';
+our $VERSION = '0.998';
 
 our @CARP_NOT = ('Net::DNS::DynDNS');
 sub DEFAULT_TIMEOUT                      { return 60 }

@@ -1,6 +1,10 @@
 CHANGES
 -------
 
+  0.998 - 10 July 2014
+
+      * Added guards against older perls
+
   0.997 - 5 July 2014
 
       * Added more checks to allow for bad network responses
