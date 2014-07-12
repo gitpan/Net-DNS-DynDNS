@@ -1,7 +1,7 @@
 
 use ExtUtils::MakeMaker;
 
-unless ($] >= 5.010001) { die "perl version $] is unacceptable\n"; }
+unless ($] >= 5.010000) { warn "Warning: Perl version 5.010000 or higher required. We run $].\n"; }
 
 WriteMakefile(
                 'NAME'          => 'Net::DNS::DynDNS',
@@ -25,3 +25,4 @@ WriteMakefile(
     ($ExtUtils::MakeMaker::VERSION ge '6.30_00' ? # shamelessly copied this from Template Toolkit
       (LICENSE           => 'perl') : ()),
 );
+

@@ -1,6 +1,10 @@
 CHANGES
 -------
 
+  0.999 - 12 July 2014
+
+      * Experimenting with a different approach in Makefile.PL.  Trying to get "N/A" results on cpan testers instead of "UKNOWN".
+
   0.998 - 10 July 2014
 
       * Added guards against older perls
